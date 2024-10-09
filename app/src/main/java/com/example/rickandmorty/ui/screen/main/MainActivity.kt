@@ -1,10 +1,9 @@
-package com.example.rickandmorty
+package com.example.rickandmorty.ui.screen.main
 
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,18 +50,27 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.rickandmorty.R
+import com.example.rickandmorty.data.api.RickAndMortyAPIService
 import com.example.rickandmorty.model.LocalCharacterModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    val viewModel: MainActivityViewModel by viewModels {
-        MainActivityViewModelFactory()
-    }
+    /* val viewModel: MainActivityViewModel by viewModels {
+         MainActivityViewModelFactory(applicationContext)
+     }*/
 
     @ExperimentalMaterialApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val viewModel = hiltViewModel<MainActivityViewModel,
+                    MainActivityViewModel.MainActivityViewModelFactory>() { factory ->
+                factory.create(RickAndMortyAPIService())
+            }
             AppUI(viewModel)
         }
     }
@@ -115,7 +123,7 @@ fun AppUI(viewModel: MainActivityViewModel) {
                             viewModel.updateItem(updatedCharacter)
                         }
                         if (listState.isScrolledToTheEnd()) {
-                            viewModel.getCharacters()
+                            viewModel.getCharacters(isAllChosen, isEnd = true)
                         }
                     }
 
@@ -137,7 +145,7 @@ fun AppUI(viewModel: MainActivityViewModel) {
                 Button(
                     onClick = {
                         isAllChosen = true
-                        viewModel.getCharacters(isAllChosen)
+                        viewModel.getCharacters(true, changedMode = true)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                     shape = MaterialTheme.shapes.medium,
@@ -156,7 +164,7 @@ fun AppUI(viewModel: MainActivityViewModel) {
                 Button(
                     onClick = {
                         isAllChosen = false
-                        viewModel.getCharacters(isAllChosen)
+                        viewModel.getCharacters(false, changedMode = true)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                     shape = MaterialTheme.shapes.medium,
@@ -220,7 +228,7 @@ private fun ShowCharacterItem(character: LocalCharacterModel, onToggleFavourite:
                 tint = if (character.isFavourite) Color.Yellow else Color.Black,
                 modifier = Modifier
                     .clickable {
-                        onToggleFavourite(character.copy(isFavourite = !character.isFavourite))
+                        onToggleFavourite(character)
                     }
                     .size(36.dp)
             )
